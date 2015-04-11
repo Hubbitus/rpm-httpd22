@@ -8,7 +8,7 @@ Adjust paths in the default layout.
      sysconfdir:    ${prefix}/conf
      datadir:       ${prefix}
 -    installbuilddir: ${datadir}/build
-+    installbuilddir: ${libdir}/httpd/build
++    installbuilddir: ${libdir}/httpd22/build
      errordir:      ${datadir}/error
      iconsdir:      ${datadir}/icons
      htdocsdir:     ${datadir}/htdocs
@@ -20,9 +20,9 @@ Adjust paths in the default layout.
 -    logfiledir:    ${localstatedir}/logs
 -    proxycachedir: ${localstatedir}/proxy
 +    localstatedir: /var
-+    runtimedir:    ${localstatedir}/run/httpd
-+    logfiledir:    ${localstatedir}/log/httpd
-+    proxycachedir: ${localstatedir}/cache/mod_proxy
++    runtimedir:    ${localstatedir}/run/httpd22
++    logfiledir:    ${localstatedir}/log/httpd22
++    proxycachedir: ${localstatedir}/cache/mod_proxy22
  </Layout>
  
  #   GNU standards conforming path layout.

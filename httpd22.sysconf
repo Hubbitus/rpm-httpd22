@@ -6,9 +6,9 @@
 # variable is now ignored.  A particular systemd service must be
 # chosen corresponding to the desired MPM:
 #
-#   httpd.service         => prefork MPM
-#   httpd-worker.service  => worker MPM
-#   httpd-event.service   => event MPM
+#   httpd22.service         => prefork MPM
+#   httpd22-worker.service  => worker MPM
+#   httpd22-event.service   => event MPM
 #
 # Use systemctl to stop/start between MPMs, and to disable/enable
 # whichever service is required to start at boot time.
@@ -21,7 +21,7 @@
 #OPTIONS=
 
 #
-# This setting ensures the httpd process is started in the "C" 
+# This setting ensures the httpd process is started in the "C"
 # locale by default:
 #
 LANG=C

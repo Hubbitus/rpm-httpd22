@@ -1,29 +1,29 @@
-%define contentdir /var/www
+%define contentdir /var/www/httpd22
 %define suexec_caller apache
 %define mmn 20051115
 %define mmnisa %{mmn}-%{__isa_name}-%{__isa_bits}
 %define vstring Fedora
 %define mpms worker event
-%define all_services httpd.service httpd-worker.service httpd-event.service
+%define all_services httpd22.service httpd22-worker.service httpd22-event.service
 
 Summary: Apache HTTP Server
-Name: httpd
+Name: httpd22
 Version: 2.2.23
-Release: 1%{?dist}
+Release: 3%{?dist}
 URL: http://httpd.apache.org/
 Source0: http://www.apache.org/dist/httpd/httpd-%{version}.tar.bz2
 Source1: index.html
-Source3: httpd.logrotate
-Source5: httpd.sysconf
-Source6: httpd-ssl-pass-dialog
+Source3: httpd22.logrotate
+Source5: httpd22.sysconf
+Source6: httpd22-ssl-pass-dialog
 Source10: httpd.conf
 Source11: ssl.conf
 Source12: welcome.conf
 Source13: manual.conf
-Source14: httpd.tmpfiles
-Source15: httpd.service
+Source14: httpd22.tmpfiles
+Source15: httpd22.service
 # Documentation
-Source31: httpd.mpm.xml
+Source31: httpd22.mpm.xml
 Source33: README.confd
 # build/scripts patches
 Patch1: httpd-2.1.10-apctl.patch
@@ -51,7 +51,7 @@ Obsoletes: httpd-suexec
 Provides: webserver
 Provides: mod_dav = %{version}-%{release}, httpd-suexec = %{version}-%{release}
 Provides: httpd-mmn = %{mmn}, httpd-mmn = %{mmnisa}
-Requires: httpd-tools = %{version}-%{release}, apr-util-ldap
+Requires: httpd22-tools = %{version}-%{release}, apr-util-ldap
 Requires(pre): /usr/sbin/useradd
 Requires(preun): systemd-units
 Requires(postun): systemd-units
@@ -66,10 +66,10 @@ Group: Development/Libraries
 Summary: Development interfaces for the Apache HTTP server
 Obsoletes: secureweb-devel, apache-devel, stronghold-apache-devel
 Requires: apr-devel, apr-util-devel, pkgconfig
-Requires: httpd = %{version}-%{release}
+Requires: httpd22 = %{version}-%{release}
 
 %description devel
-The httpd-devel package contains the APXS binary and other files
+The httpd22-devel package contains the APXS binary and other files
 that you need to build Dynamic Shared Objects (DSOs) for the
 Apache HTTP Server.
 
@@ -80,12 +80,12 @@ to install this package.
 %package manual
 Group: Documentation
 Summary: Documentation for the Apache HTTP server
-Requires: httpd = %{version}-%{release}
+Requires: httpd22 = %{version}-%{release}
 Obsoletes: secureweb-manual, apache-manual
 BuildArch: noarch
 
 %description manual
-The httpd-manual package contains the complete manual and
+The httpd22-manual package contains the complete manual and
 reference guide for the Apache HTTP server. The information can
 also be found at http://httpd.apache.org/docs/2.2/.
 
@@ -94,7 +94,7 @@ Group: System Environment/Daemons
 Summary: Tools for use with the Apache HTTP Server
 
 %description tools
-The httpd-tools package contains tools which can be used with 
+The httpd22-tools package contains tools which can be used with
 the Apache HTTP Server.
 
 %package -n mod_ssl
@@ -103,7 +103,7 @@ Summary: SSL/TLS module for the Apache HTTP Server
 Epoch: 1
 BuildRequires: openssl-devel
 Requires(post): openssl, /bin/cat
-Requires(pre): httpd
+Requires(pre): httpd22
 Requires: httpd = 0:%{version}-%{release}, httpd-mmn = %{mmnisa}
 Obsoletes: stronghold-mod_ssl
 
@@ -113,7 +113,7 @@ server via the Secure Sockets Layer (SSL) and Transport Layer
 Security (TLS) protocols.
 
 %prep
-%setup -q
+%setup -q -n httpd-%{version}
 %patch1 -p1 -b .apctl
 %patch2 -p1 -b .apxs
 %patch3 -p1 -b .deplibs
@@ -149,7 +149,7 @@ rm -rf srclib/{apr,apr-util,pcre}
 autoheader && autoconf || exit 1
 
 # Before configure; fix location of build dir in generated apxs
-%{__perl} -pi -e "s:\@exp_installbuilddir\@:%{_libdir}/httpd/build:g" \
+%{__perl} -pi -e "s:\@exp_installbuilddir\@:%{_libdir}/httpd22/build:g" \
 	support/apxs.in
 
 export CFLAGS=$RPM_OPT_FLAGS
@@ -163,66 +163,68 @@ function mpmbuild()
 mpm=$1; shift
 
 # Build the systemd file
-sed "s,@NAME@,${mpm},g;s,@EXEC@,%{_sbindir}/httpd.${mpm},g" %{SOURCE15} > httpd-${mpm}.service
-touch -r %{SOURCE15} httpd-${mpm}.service
+sed "s,@NAME@,${mpm},g;s,@EXEC@,%{_sbindir}/httpd22.${mpm},g" %{SOURCE15} > httpd22-${mpm}.service
+touch -r %{SOURCE15} httpd22-${mpm}.service
 
 # Build the man page
 ymdate=`date +'%b %Y'`
 sed "s/@PROGNAME@/httpd.${mpm}/g;s/@DATE@/${ymdate}/g;s/@VERSION@/%{version}/g;s/@MPM@/${mpm}/g;" \
-    < $RPM_SOURCE_DIR/httpd.mpm.xml > httpd.${mpm}.8.xml
-xmlto man httpd.${mpm}.8.xml
-test -f httpd.${mpm}.8 || mv man/man8/httpd.${mpm}.8 .
+    < $RPM_SOURCE_DIR/httpd22.mpm.xml > httpd22.${mpm}.8.xml
+xmlto man httpd22.${mpm}.8.xml && mv httpd.${mpm}.8 httpd22.${mpm}.8
 
 # Build the daemon
 mkdir $mpm; pushd $mpm
 ../configure \
- 	--prefix=%{_sysconfdir}/httpd \
- 	--exec-prefix=%{_prefix} \
- 	--bindir=%{_bindir} \
- 	--sbindir=%{_sbindir} \
- 	--mandir=%{_mandir} \
+	--prefix=%{_sysconfdir}/httpd22 \
+	--exec-prefix=%{_prefix} \
+	--bindir=%{_bindir} \
+	--sbindir=%{_sbindir} \
+	--mandir=%{_mandir} \
 	--libdir=%{_libdir} \
-	--sysconfdir=%{_sysconfdir}/httpd/conf \
-	--includedir=%{_includedir}/httpd \
-	--libexecdir=%{_libdir}/httpd/modules \
+	--sysconfdir=%{_sysconfdir}/httpd22/conf \
+	--includedir=%{_includedir}/httpd22 \
+	--libexecdir=%{_libdir}/httpd22/modules \
 	--datadir=%{contentdir} \
-        --with-installbuilddir=%{_libdir}/httpd/build \
+	--with-installbuilddir=%{_libdir}/httpd22/build \
 	--with-mpm=$mpm \
-        --with-apr=%{_prefix} --with-apr-util=%{_prefix} \
+	--with-apr=%{_prefix} --with-apr-util=%{_prefix} \
 	--enable-suexec --with-suexec \
 	--with-suexec-caller=%{suexec_caller} \
 	--with-suexec-docroot=%{contentdir} \
-	--with-suexec-logfile=%{_localstatedir}/log/httpd/suexec.log \
+	--with-suexec-logfile=%{_localstatedir}/log/httpd22/suexec.log \
 	--with-suexec-bin=%{_sbindir}/suexec \
 	--with-suexec-uidmin=500 --with-suexec-gidmin=100 \
-        --enable-pie \
-        --with-pcre \
+	--enable-pie \
+	--with-pcre \
 	$*
 
 make %{?_smp_mflags}
+
+mv httpd httpd22
+
 popd
 }
 
 # Build everything and the kitchen sink with the prefork build
 mpmbuild prefork \
-        --enable-mods-shared=all \
+	--enable-mods-shared=all \
 	--enable-ssl --with-ssl --disable-distcache \
 	--enable-proxy \
-        --enable-cache \
-        --enable-disk-cache \
-        --enable-ldap --enable-authnz-ldap \
-        --enable-cgid \
-        --enable-authn-anon --enable-authn-alias \
-        --disable-imagemap
+	--enable-cache \
+	--enable-disk-cache \
+	--enable-ldap --enable-authnz-ldap \
+	--enable-cgid \
+	--enable-authn-anon --enable-authn-alias \
+	--disable-imagemap
 
-# For the other MPMs, just build httpd and no optional modules
+# For the other MPMs, just build httpd22 and no optional modules
 for f in %{mpms}; do
    mpmbuild $f --enable-modules=none
 done
 
 # Create default/prefork service file for systemd
-sed "s,@NAME@,prefork,g;s,@EXEC@,%{_sbindir}/httpd,g" %{SOURCE15} > httpd.service
-touch -r %{SOURCE15} httpd.service
+sed "s,@NAME@,prefork,g;s,@EXEC@,%{_sbindir}/httpd22,g" %{SOURCE15} > httpd22.service
+touch -r %{SOURCE15} httpd22.service
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -234,37 +236,38 @@ popd
 # install alternative MPMs; executables, man pages, and systemd service files
 mkdir -p $RPM_BUILD_ROOT/lib/systemd/system
 for f in %{mpms}; do
-  install -m 755 ${f}/httpd $RPM_BUILD_ROOT%{_sbindir}/httpd.${f}
-  install -m 644 httpd.${f}.8 $RPM_BUILD_ROOT%{_mandir}/man8/httpd.${f}.8
-  install -p -m 644 httpd-${f}.service \
-          $RPM_BUILD_ROOT/lib/systemd/system/httpd-${f}.service
+  install -m 755 ${f}/httpd22 $RPM_BUILD_ROOT%{_sbindir}/httpd22.${f}
+  install -m 644 httpd22.${f}.8 $RPM_BUILD_ROOT%{_mandir}/man8/httpd22.${f}.8
+  install -p -m 644 httpd22-${f}.service \
+          $RPM_BUILD_ROOT/lib/systemd/system/httpd22-${f}.service
 done
+mv $RPM_BUILD_ROOT%{_sbindir}/httpd $RPM_BUILD_ROOT%{_sbindir}/httpd22
 
-# Default httpd (prefork) service file
-install -p -m 644 httpd.service \
-        $RPM_BUILD_ROOT/lib/systemd/system/httpd.service
+# Default httpd22 (prefork) service file
+install -p -m 644 httpd22.service \
+        $RPM_BUILD_ROOT/lib/systemd/system/httpd22.service
 
 # install conf file/directory
-mkdir $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
+mkdir $RPM_BUILD_ROOT%{_sysconfdir}/httpd22/conf.d
 install -m 644 $RPM_SOURCE_DIR/README.confd \
-    $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/README
+    $RPM_BUILD_ROOT%{_sysconfdir}/httpd22/conf.d/README
 for f in ssl.conf welcome.conf manual.conf; do
   install -m 644 -p $RPM_SOURCE_DIR/$f \
-        $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/$f
+        $RPM_BUILD_ROOT%{_sysconfdir}/httpd22/conf.d/$f
 done
 
-rm $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf/*.conf
+rm $RPM_BUILD_ROOT%{_sysconfdir}/httpd22/conf/*.conf
 install -m 644 -p $RPM_SOURCE_DIR/httpd.conf \
-   $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf/httpd.conf
+   $RPM_BUILD_ROOT%{_sysconfdir}/httpd22/conf/httpd.conf
 
 mkdir $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 -p $RPM_SOURCE_DIR/httpd.sysconf \
-   $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/httpd
+install -m 644 -p $RPM_SOURCE_DIR/httpd22.sysconf \
+   $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/httpd22
 
 # tmpfiles.d configuration
-mkdir $RPM_BUILD_ROOT%{_sysconfdir}/tmpfiles.d 
-install -m 644 -p $RPM_SOURCE_DIR/httpd.tmpfiles \
-   $RPM_BUILD_ROOT%{_sysconfdir}/tmpfiles.d/httpd.conf
+mkdir $RPM_BUILD_ROOT%{_sysconfdir}/tmpfiles.d
+install -m 644 -p $RPM_SOURCE_DIR/httpd22.tmpfiles \
+   $RPM_BUILD_ROOT%{_sysconfdir}/tmpfiles.d/httpd22.conf
 
 # for holding mod_dav lock database
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/dav
@@ -276,20 +279,23 @@ touch $RPM_BUILD_ROOT%{_localstatedir}/cache/mod_ssl/scache.{dir,pag,sem}
 # create cache root
 mkdir $RPM_BUILD_ROOT%{_localstatedir}/cache/mod_proxy
 
-# move utilities to /usr/bin
-mv $RPM_BUILD_ROOT%{_sbindir}/{ab,htdbm,logresolve,htpasswd,htdigest} \
-   $RPM_BUILD_ROOT%{_bindir}
+# move utilities to /usr/bin and rename mans
+for i in ab htdbm logresolve htpasswd htdigest; do
+   [ -f $RPM_BUILD_ROOT%{_sbindir}/$i ] && mv $RPM_BUILD_ROOT%{_sbindir}/$i $RPM_BUILD_ROOT%{_bindir}/${i}22
+   [ -f $RPM_BUILD_ROOT%{_mandir}/man1/${i}.1 ] && mv $RPM_BUILD_ROOT%{_mandir}/man1/${i}.1 $RPM_BUILD_ROOT%{_mandir}/man1/${i}22.1
+   [ -f $RPM_BUILD_ROOT%{_mandir}/man8/${i}.8 ] && mv $RPM_BUILD_ROOT%{_mandir}/man8/${i}.8 $RPM_BUILD_ROOT%{_mandir}/man8/${i}22.8
+done
 
 # Make the MMN accessible to module packages
-echo %{mmnisa} > $RPM_BUILD_ROOT%{_includedir}/httpd/.mmn
+echo %{mmnisa} > $RPM_BUILD_ROOT%{_includedir}/httpd22/.mmn
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rpm
-cat > $RPM_BUILD_ROOT%{_sysconfdir}/rpm/macros.httpd <<EOF
-%%_httpd_mmn %{mmnisa}
-%%_httpd_apxs %%{_sbindir}/apxs
-%%_httpd_modconfdir %%{_sysconfdir}/httpd/conf.d
-%%_httpd_confdir %%{_sysconfdir}/httpd/conf.d
-%%_httpd_contentdir %{contentdir}
-%%_httpd_moddir %%{_libdir}/httpd/modules
+cat > $RPM_BUILD_ROOT%{_sysconfdir}/rpm/macros.httpd22 <<EOF
+%%_httpd22_mmn %{mmnisa}
+%%_httpd22_apxs %%{_sbindir}/apxs22
+%%_httpd22_modconfdir %%{_sysconfdir}/httpd22/conf.d
+%%_httpd22_confdir %%{_sysconfdir}/httpd22/conf.d
+%%_httpd22_contentdir %{contentdir}
+%%_httpd22_moddir %%{_libdir}/httpd22/modules
 EOF
 
 # docroot
@@ -316,57 +322,69 @@ set -x
 ln -s ../../..%{_datadir}/pixmaps/poweredby.png \
         $RPM_BUILD_ROOT%{contentdir}/icons/poweredby.png
 
-# symlinks for /etc/httpd
-ln -s ../..%{_localstatedir}/log/httpd $RPM_BUILD_ROOT/etc/httpd/logs
-ln -s ../..%{_localstatedir}/run/httpd $RPM_BUILD_ROOT/etc/httpd/run
-ln -s ../..%{_libdir}/httpd/modules $RPM_BUILD_ROOT/etc/httpd/modules
+# symlinks for /etc/httpd22
+ln -s ../..%{_localstatedir}/log/httpd22 $RPM_BUILD_ROOT/etc/httpd22/logs
+ln -s ../..%{_localstatedir}/run/httpd22 $RPM_BUILD_ROOT/etc/httpd22/run
+ln -s ../..%{_libdir}/httpd22/modules $RPM_BUILD_ROOT/etc/httpd22/modules
 
 # install http-ssl-pass-dialog
 mkdir -p $RPM_BUILD_ROOT/%{_libexecdir}
-install -m755 $RPM_SOURCE_DIR/httpd-ssl-pass-dialog \
-	$RPM_BUILD_ROOT/%{_libexecdir}/httpd-ssl-pass-dialog
+install -m755 $RPM_SOURCE_DIR/httpd22-ssl-pass-dialog \
+	$RPM_BUILD_ROOT/%{_libexecdir}/httpd22-ssl-pass-dialog
 
 # install log rotation stuff
 mkdir -p $RPM_BUILD_ROOT/etc/logrotate.d
-install -m 644 -p $RPM_SOURCE_DIR/httpd.logrotate \
-	$RPM_BUILD_ROOT/etc/logrotate.d/httpd
+install -m 644 -p $RPM_SOURCE_DIR/httpd22.logrotate \
+	$RPM_BUILD_ROOT/etc/logrotate.d/httpd22
 
 # fix man page paths
-sed -e "s|/usr/local/apache2/conf/httpd.conf|/etc/httpd/conf/httpd.conf|" \
+sed -e "s|/usr/local/apache2/conf/httpd22.conf|/etc/httpd22/conf/httpd.conf|" \
     -e "s|/usr/local/apache2/conf/mime.types|/etc/mime.types|" \
-    -e "s|/usr/local/apache2/conf/magic|/etc/httpd/conf/magic|" \
-    -e "s|/usr/local/apache2/logs/error_log|/var/log/httpd/error_log|" \
-    -e "s|/usr/local/apache2/logs/access_log|/var/log/httpd/access_log|" \
-    -e "s|/usr/local/apache2/logs/httpd.pid|/var/run/httpd/httpd.pid|" \
-    -e "s|/usr/local/apache2|/etc/httpd|" < docs/man/httpd.8 \
-  > $RPM_BUILD_ROOT%{_mandir}/man8/httpd.8
+    -e "s|/usr/local/apache2/conf/magic|/etc/httpd22/conf/magic|" \
+    -e "s|/usr/local/apache2/logs/error_log|/var/log/httpd22/error_log|" \
+    -e "s|/usr/local/apache2/logs/access_log|/var/log/httpd22/access_log|" \
+    -e "s|/usr/local/apache2/logs/httpd22.pid|/var/run/httpd22/httpd22.pid|" \
+    -e "s|/usr/local/apache2|/etc/httpd22|" < docs/man/httpd.8 \
+  > $RPM_BUILD_ROOT%{_mandir}/man8/httpd22.8
 
 # Make ap_config_layout.h libdir-agnostic
 sed -i '/.*DEFAULT_..._LIBEXECDIR/d;/DEFAULT_..._INSTALLBUILDDIR/d' \
-    $RPM_BUILD_ROOT%{_includedir}/httpd/ap_config_layout.h
+    $RPM_BUILD_ROOT%{_includedir}/httpd22/ap_config_layout.h
 
 # Fix path to instdso in special.mk
 sed -i '/instdso/s,top_srcdir,top_builddir,' \
-    $RPM_BUILD_ROOT%{_libdir}/httpd/build/special.mk
+    $RPM_BUILD_ROOT%{_libdir}/httpd22/build/special.mk
 
 # Remove unpackaged files
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.exp \
-      $RPM_BUILD_ROOT/etc/httpd/conf/mime.types \
-      $RPM_BUILD_ROOT%{_libdir}/httpd/modules/*.exp \
-      $RPM_BUILD_ROOT%{_libdir}/httpd/build/config.nice \
+      $RPM_BUILD_ROOT/etc/httpd22/conf/mime.types \
+      $RPM_BUILD_ROOT%{_libdir}/httpd22/modules/*.exp \
+      $RPM_BUILD_ROOT%{_libdir}/httpd22/build/config.nice \
       $RPM_BUILD_ROOT%{_bindir}/ap?-config \
       $RPM_BUILD_ROOT%{_sbindir}/{checkgid,dbmmanage,envvars*} \
       $RPM_BUILD_ROOT%{contentdir}/htdocs/* \
       $RPM_BUILD_ROOT%{_mandir}/man1/dbmmanage.* \
       $RPM_BUILD_ROOT%{contentdir}/cgi-bin/*
 
-rm -rf $RPM_BUILD_ROOT/etc/httpd/conf/{original,extra}
+rm -rf $RPM_BUILD_ROOT/etc/httpd22/conf/{original,extra}
 
+#+Hu RENAME all with 22 suffix:
 # Make suexec a+rw so it can be stripped.  %%files lists real permissions
-chmod 755 $RPM_BUILD_ROOT%{_sbindir}/suexec
+mv $RPM_BUILD_ROOT%{_sbindir}/suexec $RPM_BUILD_ROOT%{_sbindir}/suexec22
+chmod 755 $RPM_BUILD_ROOT%{_sbindir}/suexec22
 
 # rename apxs.8 to apxs.1
-mv $RPM_BUILD_ROOT%{_mandir}/man8/apxs.8 $RPM_BUILD_ROOT%{_mandir}/man1/apxs.1
+mv $RPM_BUILD_ROOT%{_mandir}/man8/apxs.8 $RPM_BUILD_ROOT%{_mandir}/man1/apxs22.1
+
+for i in htcacheclean httxt2dbm apxs apachectl rotatelogs; do
+	mv $RPM_BUILD_ROOT%{_sbindir}/$i $RPM_BUILD_ROOT%{_sbindir}/${i}22;
+	[ -f $RPM_BUILD_ROOT%{_mandir}/man8/$i.8 ] && mv $RPM_BUILD_ROOT%{_mandir}/man8/$i.8 $RPM_BUILD_ROOT%{_mandir}/man8/${i}22.8
+done
+
+mv $RPM_BUILD_ROOT%{_mandir}/man1/httxt2dbm.1 $RPM_BUILD_ROOT%{_mandir}/man1/httxt2dbm22.1
+mv $RPM_BUILD_ROOT%{_mandir}/man8/suexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/suexec22.8
+# Leave only *22.8
+rm $RPM_BUILD_ROOT%{_mandir}/man8/httpd.8
 
 %pre
 # Add the "apache" user
@@ -374,9 +392,9 @@ mv $RPM_BUILD_ROOT%{_mandir}/man8/apxs.8 $RPM_BUILD_ROOT%{_mandir}/man1/apxs.1
 	-s /sbin/nologin -r -d %{contentdir} apache 2> /dev/null || :
 
 %post
-# Register the httpd service
-if [ $1 -eq 1 ] ; then 
-    # Initial installation 
+# Register the httpd22 service
+if [ $1 -eq 1 ] ; then
+    # Initial installation
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 
@@ -392,14 +410,14 @@ fi
 
 # Trigger for conversion from SysV, per guidelines at:
 # https://fedoraproject.org/wiki/Packaging:ScriptletSnippets#Systemd
-%triggerun -- httpd < 2.2.21-5
+%triggerun -- httpd22 < 2.2.21-5
 # Save the current service runlevel info
-# User must manually run systemd-sysv-convert --apply httpd
+# User must manually run systemd-sysv-convert --apply httpd22
 # to migrate them to systemd targets
-/usr/bin/systemd-sysv-convert --save httpd.service >/dev/null 2>&1 ||:
+/usr/bin/systemd-sysv-convert --save httpd22.service >/dev/null 2>&1 ||:
 
 # Run these because the SysV package being removed won't do them
-/sbin/chkconfig --del httpd >/dev/null 2>&1 || :
+/sbin/chkconfig --del httpd22 >/dev/null 2>&1 || :
 
 %posttrans
 /bin/systemctl try-restart %{all_services} >/dev/null 2>&1 || :
@@ -435,17 +453,17 @@ EOF
 
 %check
 # Check the built modules are all PIC
-if readelf -d $RPM_BUILD_ROOT%{_libdir}/httpd/modules/*.so | grep TEXTREL; then
+if readelf -d $RPM_BUILD_ROOT%{_libdir}/httpd22/modules/*.so | grep TEXTREL; then
    : modules contain non-relocatable code
    exit 1
 fi
 
-# Verify that the same modules were built into the httpd binaries
-./prefork/httpd -l | grep -v prefork > prefork.mods
+# Verify that the same modules were built into the httpd22 binaries
+./prefork/httpd22 -l | grep -v prefork > prefork.mods
 for mpm in %{mpms}; do
-  ./${mpm}/httpd -l | grep -v ${mpm} > ${mpm}.mods
+  ./${mpm}/httpd22 -l | grep -v ${mpm} > ${mpm}.mods
   if ! diff -u prefork.mods ${mpm}.mods; then
-    : Different modules built into httpd binaries, will not proceed
+    : Different modules built into httpd22 binaries, will not proceed
     exit 1
   fi
 done
@@ -458,33 +476,45 @@ rm -rf $RPM_BUILD_ROOT
 
 %doc ABOUT_APACHE README CHANGES LICENSE VERSIONING NOTICE
 
-%dir %{_sysconfdir}/httpd
-%{_sysconfdir}/httpd/modules
-%{_sysconfdir}/httpd/logs
-%{_sysconfdir}/httpd/run
-%dir %{_sysconfdir}/httpd/conf
-%config(noreplace) %{_sysconfdir}/httpd/conf/httpd.conf
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/welcome.conf
-%config(noreplace) %{_sysconfdir}/httpd/conf/magic
+%dir %{_sysconfdir}/httpd22
+%{_sysconfdir}/httpd22/modules
+%{_sysconfdir}/httpd22/logs
+%{_sysconfdir}/httpd22/run
+%dir %{_sysconfdir}/httpd22/conf
+%config(noreplace) %{_sysconfdir}/httpd22/conf/httpd.conf
+%config(noreplace) %{_sysconfdir}/httpd22/conf.d/welcome.conf
+%config(noreplace) %{_sysconfdir}/httpd22/conf/magic
 
-%config(noreplace) %{_sysconfdir}/logrotate.d/httpd
+%config(noreplace) %{_sysconfdir}/logrotate.d/httpd22
 
-%dir %{_sysconfdir}/httpd/conf.d
-%{_sysconfdir}/httpd/conf.d/README
+%dir %{_sysconfdir}/httpd22/conf.d
+%{_sysconfdir}/httpd22/conf.d/README
 
-%config(noreplace) %{_sysconfdir}/sysconfig/httpd
-%config %{_sysconfdir}/tmpfiles.d/httpd.conf
+%config(noreplace) %{_sysconfdir}/sysconfig/httpd22
+%config %{_sysconfdir}/tmpfiles.d/httpd22.conf
 
-%{_sbindir}/ht*
-%{_sbindir}/apachectl
-%{_sbindir}/rotatelogs
-# cap_dac_override needed to write to /var/log/httpd
-%caps(cap_setuid,cap_setgid,cap_dac_override+pe) %attr(510,root,%{suexec_caller}) %{_sbindir}/suexec
+%{_sbindir}/httpd22
+%{_mandir}/man8/httpd22.8.gz
+%{_sbindir}/httpd22.event
+%{_mandir}/man8/httpd22.event.8.gz
+%{_sbindir}/httpd22.worker
+%{_mandir}/man8/httpd22.worker.8.gz
+%{_sbindir}/htcacheclean22
+%{_mandir}/man8/htcacheclean22.8.gz
+%{_sbindir}/httxt2dbm22
+%{_mandir}/man1/httxt2dbm22.1.gz
+%{_sbindir}/apachectl22
+%{_mandir}/man8/apachectl22.8.gz
+%{_sbindir}/rotatelogs22
+%{_mandir}/man8/rotatelogs22.8.gz
+# cap_dac_override needed to write to /var/log/httpd22
+%caps(cap_setuid,cap_setgid,cap_dac_override+pe) %attr(510,root,%{suexec_caller}) %{_sbindir}/suexec22
+%{_mandir}/man8/suexec22.8.gz
 
-%dir %{_libdir}/httpd
-%dir %{_libdir}/httpd/modules
-%{_libdir}/httpd/modules/mod*.so
-%exclude %{_libdir}/httpd/modules/mod_ssl.so
+%dir %{_libdir}/httpd22
+%dir %{_libdir}/httpd22/modules
+%{_libdir}/httpd22/modules/mod*.so
+%exclude %{_libdir}/httpd22/modules/mod_ssl.so
 
 %dir %{contentdir}
 %dir %{contentdir}/cgi-bin
@@ -498,47 +528,60 @@ rm -rf $RPM_BUILD_ROOT
 %config %{contentdir}/error/*.var
 %config %{contentdir}/error/include/*.html
 
-%attr(0710,root,apache) %dir %{_localstatedir}/run/httpd
-%attr(0700,root,root) %dir %{_localstatedir}/log/httpd
+%attr(0710,root,apache) %dir %{_localstatedir}/run/httpd22
+%attr(0700,root,root) %dir %{_localstatedir}/log/httpd22
 %attr(0700,apache,apache) %dir %{_localstatedir}/lib/dav
 %attr(0700,apache,apache) %dir %{_localstatedir}/cache/mod_proxy
-
-%{_mandir}/man8/*
 
 /lib/systemd/system/*.service
 
 %files tools
 %defattr(-,root,root)
-%{_bindir}/*
-%{_mandir}/man1/*
+%{_bindir}/ab22
+%{_mandir}/man8/ab22.8.gz
+%{_bindir}/htdbm22
+%{_mandir}/man1/htdbm22.1.gz
+%{_bindir}/htdigest22
+%{_mandir}/man1/htdigest22.1.gz
+%{_bindir}/htpasswd22
+%{_mandir}/man1/htpasswd22.1.gz
+%{_bindir}/logresolve22
+%{_mandir}/man8/logresolve22.8.gz
 %doc LICENSE NOTICE
 
 %files manual
 %defattr(-,root,root)
 %{contentdir}/manual
-%config %{_sysconfdir}/httpd/conf.d/manual.conf
+%config %{_sysconfdir}/httpd22/conf.d/manual.conf
 
 %files -n mod_ssl
 %defattr(-,root,root)
-%{_libdir}/httpd/modules/mod_ssl.so
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/ssl.conf
+%{_libdir}/httpd22/modules/mod_ssl.so
+%config(noreplace) %{_sysconfdir}/httpd22/conf.d/ssl.conf
 %attr(0700,apache,root) %dir %{_localstatedir}/cache/mod_ssl
 %attr(0600,apache,root) %ghost %{_localstatedir}/cache/mod_ssl/scache.dir
 %attr(0600,apache,root) %ghost %{_localstatedir}/cache/mod_ssl/scache.pag
 %attr(0600,apache,root) %ghost %{_localstatedir}/cache/mod_ssl/scache.sem
-%{_libexecdir}/httpd-ssl-pass-dialog
+%{_libexecdir}/httpd22-ssl-pass-dialog
 
 %files devel
 %defattr(-,root,root)
-%{_includedir}/httpd
-%{_sbindir}/apxs
-%{_mandir}/man1/apxs.1*
-%dir %{_libdir}/httpd/build
-%{_libdir}/httpd/build/*.mk
-%{_libdir}/httpd/build/*.sh
-%{_sysconfdir}/rpm/macros.httpd
+%{_includedir}/httpd22
+%{_sbindir}/apxs22
+%{_mandir}/man1/apxs22.1*
+%dir %{_libdir}/httpd22/build
+%{_libdir}/httpd22/build/*.mk
+%{_libdir}/httpd22/build/*.sh
+%{_sysconfdir}/rpm/macros.httpd22
 
 %changelog
+* Mon Mar 23 2015 Pavel Alexeev <Pahan@Hubbitus.info> - 2.2.23-3
+- Adjust logrotate pathes.
+
+* Mon Mar 16 2015 Pavel Alexeev <Pahan@Hubbitus.info> - 2.2.23-2
+- Rename package into httpd22. Introduce for 1C web-services which does not work on Apache 2.4.
+- Explicit list files, man, hack configs.
+
 * Tue Jan 29 2013 Jan Kaluza <jkaluza@redhat.com> - 2.2.23-1
 - update to 2.2.23
 
@@ -777,7 +820,7 @@ rm -rf $RPM_BUILD_ROOT
   by Jason Tibbs (#238257)
 
 * Tue Jul 24 2007 Joe Orton <jorton@redhat.com> 2.2.4-5
-- spec file cleanups: provide httpd-suexec, mod_dav; 
+- spec file cleanups: provide httpd-suexec, mod_dav;
  don't obsolete mod_jk; drop trailing dots from Summaries
 - init script
  * add LSB info header, support force-reload (#246944)
@@ -790,8 +833,8 @@ rm -rf $RPM_BUILD_ROOT
 
 * Tue Apr  3 2007 Joe Orton <jorton@redhat.com> 2.2.4-3
 - drop old triggers, old Requires, xmlto BR
-- use Requires(...) correctly 
-- use standard BuildRoot 
+- use Requires(...) correctly
+- use standard BuildRoot
 - don't mark init script as config file
 - trim CHANGES further
 
@@ -957,7 +1000,7 @@ rm -rf $RPM_BUILD_ROOT
 - mod_ssl: fix for picking up -shutdown options (upstream #34452)
 
 * Mon Apr 18 2005 Joe Orton <jorton@redhat.com> 2.0.54-4
-- replace PreReq with Requires(pre) 
+- replace PreReq with Requires(pre)
 
 * Mon Apr 18 2005 Joe Orton <jorton@redhat.com> 2.0.54-3
 - update to 2.0.54
@@ -1004,7 +1047,7 @@ rm -rf $RPM_BUILD_ROOT
 * Thu Nov 11 2004 Jeff Johnson <jbj@jbj.org> 2.0.52-4
 - rebuild against db-4.3-21.
 
-* Thu Sep 28 2004 Joe Orton <jorton@redhat.com> 2.0.52-3
+* Tue Sep 28 2004 Joe Orton <jorton@redhat.com> 2.0.52-3
 - add dummy connection address fixes from HEAD
 - mod_ssl: add security fix for CAN-2004-0885
 

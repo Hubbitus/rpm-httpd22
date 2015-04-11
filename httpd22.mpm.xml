@@ -6,7 +6,7 @@
   <refentryinfo>
     <date>@DATE@</date>
     <title>Apache HTTP Server</title>
-    <productname>httpd</productname>
+    <productname>httpd22</productname>
     <productnumber>@VERSION@</productnumber>
   </refentryinfo>
 
@@ -17,7 +17,7 @@
 
   <refnamediv>
     <refname>@PROGNAME@</refname>
-    <refpurpose>httpd @MPM@ MPM executable</refpurpose>
+    <refpurpose>httpd22 @MPM@ MPM executable</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
@@ -30,21 +30,21 @@
     <title>Description</title>
 
     <para>The <command>@PROGNAME@</command> executable is an
-    alternative build of the <command>httpd</command> executable which
+    alternative build of the <command>httpd22</command> executable which
     uses the <emphasis>@MPM@</emphasis> Multi-Processing Module (MPM).
     The executable accepts the same command-line arguments as
-    the <command>httpd</command> executable.</para>
+    the <command>httpd22</command> executable.</para>
 
     <para>To configure the SysV init scripts to use this MPM, set the
     <varname>HTTPD</varname> environment variable in
-    the <filename>/etc/sysconfig/httpd</filename> configuration file.</para>
+    the <filename>/etc/sysconfig/httpd22</filename> configuration file.</para>
 
   </refsect1>
 
   <refsect1>
     <title>See also</title>
 
-    <para>httpd(8), <ulink url="http://httpd.apache.org/docs/2.2/mpm.html"/></para>
+    <para>httpd22(8), <ulink url="http://httpd.apache.org/docs/2.2/mpm.html"/></para>
   </refsect1>
 
 </refentry>
