@@ -1,7 +1,7 @@
 %define contentdir /var/www/httpd22
 %define suexec_caller apache
 %define mmn 20051115
-%define mmnisa %{mmn}-%{__isa_name}-%{__isa_bits}
+%define mmnisa %{mmn}%{__isa_name}-%{__isa_bits}
 %define vstring Fedora
 %define mpms worker event
 %define all_services httpd22.service httpd22-worker.service httpd22-event.service
